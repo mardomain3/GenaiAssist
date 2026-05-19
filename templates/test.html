@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #1e293b;
+      padding: 2.5rem;
+      border-radius: 12px;
+      width: 360px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    h2 { color: #f1f5f9; font-size: 1.6rem; margin-bottom: 1.5rem; text-align: center; }
+    label { color: #94a3b8; font-size: 0.85rem; display: block; margin-bottom: 0.3rem; }
+    input {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #f1f5f9;
+      font-size: 0.95rem;
+      margin-bottom: 1.2rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus { border-color: #6366f1; }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover { background: #4f46e5; }
+    .error {
+      background: #7f1d1d;
+      color: #fca5a5;
+      padding: 0.6rem 0.9rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+    }
+    .hint { color: #64748b; font-size: 0.78rem; text-align: center; margin-top: 1rem; }
+    .hint a { color: #818cf8; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🔐 Sign In</h2>
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/login">
+      <label>Username</label>
+      <input type="text" name="username" placeholder="Enter username" required />
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Enter password" required />
+      <button type="submit">Login</button>
+    </form>
+    <p class="hint">Test the API at <a href="/docs">/docs</a> (Swagger UI)</p>
+  </div>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #1e293b;
+      padding: 2.5rem;
+      border-radius: 12px;
+      width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    h2 { color: #f1f5f9; font-size: 1.6rem; margin-bottom: 1.5rem; text-align: center; }
+    label { color: #94a3b8; font-size: 0.85rem; display: block; margin-bottom: 0.3rem; }
+    input {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #f1f5f9;
+      font-size: 0.95rem;
+      margin-bottom: 1.2rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus { border-color: #6366f1; }
+    .btn-primary {
+      width: 100%;
+      padding: 0.75rem;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+      margin-bottom: 0.75rem;
+    }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-secondary {
+      width: 100%;
+      padding: 0.75rem;
+      background: transparent;
+      color: #6366f1;
+      border: 1.5px solid #6366f1;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+      text-align: center;
+      display: block;
+      text-decoration: none;
+    }
+    .btn-secondary:hover { background: #6366f1; color: white; }
+    .error {
+      background: #7f1d1d;
+      color: #fca5a5;
+      padding: 0.6rem 0.9rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+    }
+    .success {
+      background: #14532d;
+      color: #86efac;
+      padding: 0.6rem 0.9rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+    .divider hr { flex: 1; border: none; border-top: 1px solid #334155; }
+    .divider span { color: #475569; font-size: 0.8rem; }
+    .hint { color: #64748b; font-size: 0.78rem; text-align: center; margin-top: 1rem; }
+    .hint a { color: #818cf8; text-decoration: none; }
+
+    /* Register modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #1e293b;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 360px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .modal h3 { color: #f1f5f9; margin-bottom: 1.2rem; font-size: 1.3rem; }
+    .close-btn {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+    .close-btn:hover { color: #f1f5f9; }
+    #register-msg { margin-bottom: 0.8rem; font-size: 0.85rem; min-height: 1.2rem; }
+  </style>
+</head>
+<body>
+
+  <!-- Login Card -->
+  <div class="card">
+    <h2>🔐 Sign In</h2>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if registered %}
+    <div class="success">✅ Account created! Please log in.</div>
+    {% endif %}
+
+    <form method="post" action="/login">
+      <label>Username</label>
+      <input type="text" name="username" placeholder="Enter username" required />
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Enter password" required />
+      <button type="submit" class="btn-primary">Login</button>
+    </form>
+
+    <div class="divider"><hr><span>or</span><hr></div>
+
+    <button class="btn-secondary" onclick="openRegister()">Create an Account</button>
+
+    <p class="hint">Test APIs at <a href="/docs">/docs</a></p>
+  </div>
+
+  <!-- Register Modal -->
+  <div class="modal-overlay" id="register-modal">
+    <div class="modal">
+      <button class="close-btn" onclick="closeRegister()">✕</button>
+      <h3>📝 Create Account</h3>
+      <div id="register-msg"></div>
+      <label>Username</label>
+      <input type="text" id="reg-username" placeholder="Choose a username" style="width:100%;padding:0.65rem 0.9rem;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:0.95rem;margin-bottom:1.2rem;outline:none;" />
+      <label>Password</label>
+      <input type="password" id="reg-password" placeholder="Choose a password" style="width:100%;padding:0.65rem 0.9rem;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:0.95rem;margin-bottom:1.2rem;outline:none;" />
+      <button class="btn-primary" onclick="submitRegister()">Register</button>
+    </div>
+  </div>
+
+  <script>
+    function openRegister() {
+      document.getElementById('register-modal').classList.add('active');
+    }
+    function closeRegister() {
+      document.getElementById('register-modal').classList.remove('active');
+      document.getElementById('register-msg').textContent = '';
+    }
+    async function submitRegister() {
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value.trim();
+      const msg = document.getElementById('register-msg');
+
+      if (!username || !password) {
+        msg.style.color = '#fca5a5';
+        msg.textContent = '⚠️ Please fill in both fields.';
+        return;
+      }
+
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (res.ok) {
+        closeRegister();
+        // Show success message on login page by reloading with param
+        window.location.href = '/login?registered=1';
+      } else {
+        const data = await res.json();
+        msg.style.color = '#fca5a5';
+        msg.textContent = '❌ ' + (data.detail || 'Registration failed');
+      }
+    }
+  </script>
+
+</body>
+</html>

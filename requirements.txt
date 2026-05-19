@@ -1,0 +1,12 @@
+pandas
+openpyxl
+langchain
+langchain-google-genai
+google-generativeai
+fastapi 
+uvicorn 
+python-multipart
+dotenv
+python-jose[cryptography] 
+python-multipart 
+jinja2
