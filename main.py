@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from datetime import timedelta
-
+from database import get_db
 from services.query_services import run_query, get_columns
 from database import init_db, create_user, get_user, verify_password
 from auth import (
@@ -188,3 +188,21 @@ def query(
         raise HTTPException(status_code=404, detail="File not found. Upload first.")
     result = run_query(file_store[request.file_id], request.question)
     return result
+
+@app.get("/admin/users")
+def list_users(request: Request):
+    # Simple secret key check — change this to something strong
+    secret = request.query_params.get("secret")
+    if secret != "mardomain333":   # 🔐 change this
+        raise HTTPException(status_code=403, detail="Forbidden")
+    
+    conn = get_db()
+    users = conn.execute(
+        "SELECT id, username, created_at FROM users"  # never return hashed_password
+    ).fetchall()
+    conn.close()
+    
+    return {
+        "total_users": len(users),
+        "users": [{"id": u["id"], "username": u["username"], "created_at": u["created_at"]} for u in users]
+    }
