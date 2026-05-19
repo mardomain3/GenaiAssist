@@ -2,7 +2,7 @@ import sqlite3
 import hashlib
 import os
 
-DB_NAME = "Data/users.db" 
+DB_NAME = "/DB/users.db" 
 
 def get_db():
     conn = sqlite3.connect(DB_NAME)
