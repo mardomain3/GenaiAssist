@@ -17,5 +17,4 @@ __pycache__/
 # VS Code
 .vscode/
 projectenv/
-
 users.db
