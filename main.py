@@ -151,7 +151,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),
-    current_user=Depends(get_current_user_cookie)   # 🔒 protected
+    current_user=Depends(get_current_user_cookie)   # ✅ cookie
 ):
     if not file.filename.endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="Only .xlsx files are supported")
@@ -171,7 +171,7 @@ async def upload_file(
 @app.get("/columns/{file_id}")
 def columns(
     file_id: str,
-    current_user=Depends(get_current_user_cookie)   # 🔒 protected
+    current_user=Depends(get_current_user_cookie)   # ✅ cookie
 ):
     if file_id not in file_store:
         raise HTTPException(status_code=404, detail="File not found")
@@ -182,7 +182,7 @@ def columns(
 @app.post("/query")
 def query(
     request: QueryRequest,
-    current_user=Depends(get_current_user_api)       # 🔒 protected (Bearer for Swagger)
+    current_user=Depends(get_current_user_cookie)   # ✅ cookie (was get_current_user_api)
 ):
     if request.file_id not in file_store:
         raise HTTPException(status_code=404, detail="File not found. Upload first.")
