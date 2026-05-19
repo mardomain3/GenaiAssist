@@ -1,54 +1,50 @@
-import sqlite3
-import hashlib
 import os
+from supabase import create_client, Client
+from supabase.client import ClientOptions
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
+from dotenv import load_dotenv
 
-DB_NAME = "users.db" 
+load_dotenv()
 
-def get_db():
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    return conn
+ph = PasswordHasher(time_cost=2, memory_cost=65536, parallelism=2)
+
+def get_supabase() -> Client:
+    return create_client(
+        os.getenv("SUPABASE_URL"),
+        os.getenv("SUPABASE_SERVICE_KEY"),
+        options=ClientOptions()          # 👈 fixes the AttributeError
+    )
 
 def init_db():
-    conn = get_db()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            hashed_password TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
+    print("✅ Supabase client ready")
 
 def hash_password(password: str) -> str:
-    salt = os.urandom(16).hex()
-    hashed = hashlib.sha256((password + salt).encode()).hexdigest()
-    return f"{salt}${hashed}"
+    return ph.hash(password)
 
 def verify_password(plain_password: str, stored_hash: str) -> bool:
-    salt, hashed = stored_hash.split("$")
-    return hashlib.sha256((plain_password + salt).encode()).hexdigest() == hashed
+    try:
+        ph.verify(stored_hash, plain_password)
+        return True
+    except (VerifyMismatchError, VerificationError, InvalidHashError):
+        return False
 
 def create_user(username: str, password: str):
-    conn = get_db()
+    supabase = get_supabase()
     try:
-        conn.execute(
-            "INSERT INTO users (username, hashed_password) VALUES (?, ?)",
-            (username, hash_password(password))
-        )
-        conn.commit()
+        supabase.table("users").insert({
+            "username": username,
+            "hashed_password": hash_password(password)
+        }).execute()
         return True
-    except sqlite3.IntegrityError:
-        return False  # Username already exists
-    finally:
-        conn.close()
+    except Exception as e:
+        if "duplicate" in str(e).lower() or "unique" in str(e).lower() or "23505" in str(e):
+            return False
+        raise e
 
 def get_user(username: str):
-    conn = get_db()
-    user = conn.execute(
-        "SELECT * FROM users WHERE username = ?", (username,)
-    ).fetchone()
-    conn.close()
-    return user
+    supabase = get_supabase()
+    result = supabase.table("users").select("*").eq("username", username).execute()
+    if result.data:
+        return result.data[0]
+    return None

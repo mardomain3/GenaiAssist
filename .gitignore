@@ -18,3 +18,4 @@ __pycache__/
 .vscode/
 projectenv/
 users.db
+test.py

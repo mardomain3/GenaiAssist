@@ -1,8 +1,6 @@
 pandas
 openpyxl
 langchain
-langchain-google-genai
-google-generativeai
 fastapi 
 uvicorn 
 python-multipart
@@ -12,3 +10,6 @@ python-multipart
 jinja2
 langchain_groq
 pip-system-certs
+httpx
+argon2-cffi
+supabase

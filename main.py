@@ -8,7 +8,6 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from datetime import timedelta
-from database import get_db
 from services.query_services import run_query, get_columns
 from database import init_db, create_user, get_user, verify_password
 from auth import (
