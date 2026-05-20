@@ -1,6 +1,6 @@
 import os
 import uuid
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Request, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Request, Form,Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
@@ -9,7 +9,9 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from datetime import timedelta
 from services.query_services import run_query, get_columns
-from database import init_db, create_user, get_user, verify_password
+from database import init_db, create_user, get_user, verify_password,get_supabase
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+
 from auth import (
     create_access_token,
     get_current_user_api,
@@ -62,10 +64,11 @@ class QueryRequest(BaseModel):
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
     registered = request.query_params.get("registered")
+    error = request.query_params.get("error")
     return templates.TemplateResponse(
         request=request,
         name="login.html",
-        context={"registered": registered}
+        context={"registered": registered, "error": error}
     )
 
 @app.post("/login", response_class=HTMLResponse)
@@ -190,18 +193,107 @@ def query(
 
 @app.get("/admin/users")
 def list_users(request: Request):
-    # Simple secret key check — change this to something strong
     secret = request.query_params.get("secret")
-    if secret != "mardomain333":   # 🔐 change this
+    if secret != "mardomain333":
         raise HTTPException(status_code=403, detail="Forbidden")
     
-    conn = get_db()
-    users = conn.execute(
-        "SELECT id, username, created_at FROM users"  # never return hashed_password
-    ).fetchall()
-    conn.close()
-    
+    from database import get_supabase
+    supabase = get_supabase()
+    result = supabase.table("users").select("id, username, created_at").execute()
+    users = result.data
+
     return {
         "total_users": len(users),
-        "users": [{"id": u["id"], "username": u["username"], "created_at": u["created_at"]} for u in users]
+        "users": users
     }
+
+@app.get("/auth/google")
+def google_login():
+    supabase_url = os.getenv("SUPABASE_URL")
+    redirect_to = os.getenv("REDIRECT_URL")
+    
+    # Build Supabase OAuth URL directly
+    url = (
+        f"{supabase_url}/auth/v1/authorize"
+        f"?provider=google"
+        f"&redirect_to={redirect_to}"
+    )
+    return RedirectResponse(url=url)
+
+
+@app.get("/auth/callback")
+def google_callback(request: Request, code: str = None, error: str = None):
+    if error:
+        print(f"❌ Error from Google: {error}")
+        return RedirectResponse(url="/login?error=google_failed")
+
+    # With implicit flow, token comes as URL fragment (#access_token=...)
+    # We need a small HTML page to extract it and send to backend
+    return HTMLResponse("""
+        <html>
+        <script>
+            // Extract token from URL fragment
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const access_token = params.get('access_token');
+            const refresh_token = params.get('refresh_token');
+
+            if (access_token) {
+                // Send token to backend
+                fetch('/auth/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ access_token, refresh_token })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/';
+                    } else {
+                        window.location.href = '/login?error=google_failed';
+                    }
+                });
+            } else {
+                window.location.href = '/login?error=google_failed';
+            }
+        </script>
+        <body>Completing sign in...</body>
+        </html>
+    """)
+
+
+@app.post("/auth/session")
+def handle_session(request: Request, body: dict = Body(...)):
+    """Receive token from frontend and set cookie"""
+    from database import get_supabase
+    from pydantic import BaseModel
+
+    access_token = body.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=400, detail="No token")
+
+    try:
+        supabase = get_supabase()
+        # Get user info from token
+        user = supabase.auth.get_user(access_token)
+        email = user.user.email
+        username = email.split("@")[0]
+
+        # Create user in our table if not exists
+        existing = get_user(username)
+        if not existing:
+            import secrets
+            create_user(username, secrets.token_hex(32))
+
+        # Set our JWT cookie
+        token = create_access_token(
+            data={"sub": username},
+            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        )
+        response = JSONResponse({"success": True})
+        response.set_cookie(key="access_token", value=f"Bearer {token}", httponly=True)
+        return response
+
+    except Exception as e:
+        print(f"❌ Session error: {e}")
+        return JSONResponse({"success": False})
