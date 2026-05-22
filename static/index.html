@@ -658,6 +658,39 @@
       letter-spacing: 0.08em;
       border-top: 1px solid var(--border);
     }
+    /* Chart card glow on appear */
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    animation: chartAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes chartAppear {
+    0% {
+      opacity: 0;
+      transform: translateY(16px) scale(0.98);
+      border-color: rgba(79,255,176,0.4);
+    }
+    60% { border-color: rgba(79,255,176,0.2); }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      border-color: var(--border);
+    }
+  }
+
+  #chart-reason {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 0.75rem;
+    letter-spacing: 0.08em;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+  }
   </style>
 </head>
 <body>
@@ -818,7 +851,7 @@
 </div>
 
 <div class="footer">
-  Mardomain Industries &nbsp;·&nbsp; &copy; 2025 genai assistant
+  Mardomain Inc &nbsp;·&nbsp; &copy; 2025 genai assistant
 </div>
 
 </div>
@@ -944,74 +977,206 @@
       document.getElementById('error-card').textContent = '✗ ' + err.message;
     }
   }
+function renderChart(data) {
+  const card   = document.getElementById('chart-card');
+  const div    = document.getElementById('plotly-chart');
+  const reason = document.getElementById('chart-reason');
+  const cfg    = data.chart_config;
+  const rows   = data.result_data;
 
-  function renderChart(data) {
-    const card   = document.getElementById('chart-card');
-    const div    = document.getElementById('plotly-chart');
-    const reason = document.getElementById('chart-reason');
-    const cfg    = data.chart_config;
-    const rows   = data.result_data;
-
-    if (!cfg || cfg.chart_type === 'none' || !rows || rows.length === 0) {
-      card.style.display = 'none'; return;
-    }
-
-    card.style.display = 'block';
-    reason.textContent = cfg.reason || '';
-
-    const xVals  = rows.map(r => r[cfg.x_column]);
-    const yVals  = rows.map(r => r[cfg.y_column]);
-    const palette = ['#4fffb0','#4facff','#ff6b6b','#ffd93d','#c77dff','#00b4d8','#ff9f43','#26de81'];
-
-    const layout = {
-      title: { text: cfg.title || '', font: { family: 'Syne, sans-serif', size: 13, color: '#e8edf2' } },
-      paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-      font: { family: 'IBM Plex Mono, monospace', color: '#8899aa', size: 11 },
-      xaxis: { gridcolor: 'rgba(255,255,255,0.04)', linecolor: 'rgba(255,255,255,0.06)', tickfont: { color: '#4a5568' } },
-      yaxis: { gridcolor: 'rgba(255,255,255,0.04)', linecolor: 'rgba(255,255,255,0.06)', tickfont: { color: '#4a5568' } },
-      margin: { t: 40, l: 50, r: 20, b: 60 },
-      legend: { font: { color: '#8899aa' } }
-    };
-
-    const config = { responsive: true, displayModeBar: false };
-    let traces = [];
-
-    if (cfg.chart_type === 'bar') {
-      traces = [{ type: 'bar', x: xVals, y: yVals,
-        marker: { color: palette[0], opacity: 0.85 },
-        hovertemplate: '<b>%{x}</b><br>%{y}<extra></extra>'
-      }];
-    } else if (cfg.chart_type === 'line') {
-      traces = [{ type: 'scatter', mode: 'lines+markers', x: xVals, y: yVals,
-        line: { color: palette[0], width: 2 },
-        marker: { color: palette[1], size: 5 },
-        fill: 'tozeroy', fillcolor: 'rgba(79,255,176,0.04)',
-        hovertemplate: '<b>%{x}</b><br>%{y}<extra></extra>'
-      }];
-    } else if (cfg.chart_type === 'pie') {
-      traces = [{ type: 'pie', labels: xVals, values: yVals,
-        marker: { colors: palette },
-        textfont: { family: 'IBM Plex Mono', color: '#050810' },
-        hole: 0.4,
-        hovertemplate: '<b>%{label}</b><br>%{value} (%{percent})<extra></extra>'
-      }];
-      layout.xaxis = undefined; layout.yaxis = undefined;
-    } else if (cfg.chart_type === 'scatter') {
-      traces = [{ type: 'scatter', mode: 'markers', x: xVals, y: yVals,
-        marker: { color: palette[0], size: 7, opacity: 0.8 },
-        hovertemplate: '%{x} / %{y}<extra></extra>'
-      }];
-    }
-
-    Plotly.newPlot(div, traces, layout, config);
+  if (!cfg || cfg.chart_type === 'none' || !rows || rows.length === 0) {
+    card.style.display = 'none'; return;
   }
 
-  document.getElementById('query-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (!document.getElementById('run-btn').disabled) runQuery();
-    }
-  });
+  // Validate columns exist
+  const x_col = cfg.x_column;
+  const y_col = cfg.y_column;
+
+  if (cfg.chart_type !== 'pie' && (!x_col || !y_col)) {
+    card.style.display = 'none'; return;
+  }
+
+  const xVals = rows.map(r => r[x_col]);
+  const yVals = rows.map(r => Number(r[y_col]));
+
+  if (xVals.length === 0 || yVals.some(v => isNaN(v))) {
+    card.style.display = 'none'; return;
+  }
+
+  card.style.display = 'block';
+  reason.textContent = cfg.reason || '';
+  div.innerHTML = '';
+
+  const palette = ['#4fffb0','#4facff','#ff6b6b','#ffd93d','#c77dff','#00b4d8','#ff9f43','#26de81'];
+
+  const config = {
+    responsive: true,
+    displayModeBar: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: [
+      'select2d','lasso2d','zoomIn2d',
+      'zoomOut2d','autoScale2d','resetScale2d'
+    ]
+  };
+
+  const hoverlabel = {
+    bgcolor: '#111620',
+    bordercolor: '#4fffb0',
+    font: { family: 'IBM Plex Mono, monospace', size: 12, color: '#e8edf2' }
+  };
+
+  // ── BAR ─────────────────────────────────────────────────
+  if (cfg.chart_type === 'bar') {
+    const layout = {
+      title: { text: cfg.title || '', font: { family: 'Syne, sans-serif', size: 14, color: '#e8edf2' }, x: 0.02 },
+      paper_bgcolor: 'transparent',
+      plot_bgcolor: 'transparent',
+      font: { family: 'IBM Plex Mono, monospace', color: '#8899aa', size: 11 },
+      xaxis: { gridcolor: 'rgba(255,255,255,0.03)', linecolor: 'rgba(255,255,255,0.06)', tickfont: { color: '#4a5568', size: 10 }, zeroline: false },
+      yaxis: { gridcolor: 'rgba(255,255,255,0.03)', linecolor: 'rgba(255,255,255,0.06)', tickfont: { color: '#4a5568', size: 10 }, zeroline: false },
+      margin: { t: 50, l: 55, r: 20, b: 65 },
+      hoverlabel,
+      bargap: 0.3
+    };
+
+    const trace = {
+      type: 'bar',
+      x: xVals,
+      y: new Array(yVals.length).fill(0),
+      marker: {
+        color: yVals.map((_, i) => palette[i % palette.length]),
+        opacity: 0.9,
+        line: { color: 'rgba(255,255,255,0.04)', width: 1 }
+      },
+      hovertemplate: '<b>%{x}</b><br><span style="color:#4fffb0">%{y}</span><extra></extra>'
+    };
+
+    Plotly.newPlot(div, [trace], layout, config).then(() => {
+      const steps = 30;
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i > steps) { clearInterval(interval); return; }
+        const p = i / steps;
+        const eased = 1 - Math.pow(1 - p, 3);
+        Plotly.restyle(div, { y: [yVals.map(v => v * eased)] }, [0]);
+        i++;
+      }, 16);
+    });
+
+  // ── LINE ─────────────────────────────────────────────────
+  } else if (cfg.chart_type === 'line') {
+    const layout = {
+      title: { text: cfg.title || '', font: { family: 'Syne, sans-serif', size: 14, color: '#e8edf2' }, x: 0.02 },
+      paper_bgcolor: 'transparent',
+      plot_bgcolor: 'transparent',
+      font: { family: 'IBM Plex Mono, monospace', color: '#8899aa', size: 11 },
+      xaxis: { gridcolor: 'rgba(255,255,255,0.03)', linecolor: 'rgba(255,255,255,0.06)', tickfont: { color: '#4a5568', size: 10 }, zeroline: false },
+      yaxis: { gridcolor: 'rgba(255,255,255,0.03)', linecolor: 'rgba(255,255,255,0.06)', tickfont: { color: '#4a5568', size: 10 }, zeroline: false },
+      margin: { t: 50, l: 55, r: 20, b: 65 },
+      hoverlabel
+    };
+
+    const trace = {
+      type: 'scatter',
+      mode: 'lines+markers',
+      x: [xVals[0]],
+      y: [yVals[0]],
+      line: { color: '#4fffb0', width: 2.5, shape: 'spline', smoothing: 0.8 },
+      marker: { color: '#4facff', size: 6, line: { color: '#4fffb0', width: 1 } },
+      fill: 'tozeroy',
+      fillcolor: 'rgba(79,255,176,0.05)',
+      hovertemplate: '<b>%{x}</b><br><span style="color:#4fffb0">%{y}</span><extra></extra>'
+    };
+
+    Plotly.newPlot(div, [trace], layout, config).then(() => {
+      let i = 2;
+      const interval = setInterval(() => {
+        if (i > xVals.length) { clearInterval(interval); return; }
+        Plotly.restyle(div, {
+          x: [xVals.slice(0, i)],
+          y: [yVals.slice(0, i)]
+        }, [0]);
+        i++;
+      }, 80);
+    });
+
+  // ── PIE ──────────────────────────────────────────────────
+  } else if (cfg.chart_type === 'pie') {
+    const labels = rows.map(r => r[x_col]);
+    const values = rows.map(r => Number(r[y_col]));
+    const maxVal = Math.max(...values);
+
+    const layout = {
+      title: { text: cfg.title || '', font: { family: 'Syne, sans-serif', size: 14, color: '#e8edf2' }, x: 0.02 },
+      paper_bgcolor: 'transparent',
+      plot_bgcolor: 'transparent',
+      font: { family: 'IBM Plex Mono, monospace', color: '#8899aa', size: 11 },
+      margin: { t: 50, l: 20, r: 20, b: 20 },
+      showlegend: true,
+      legend: { font: { color: '#8899aa', size: 11 }, orientation: 'v', x: 1, y: 0.5 },
+      hoverlabel
+    };
+
+    const trace = {
+      type: 'pie',
+      labels,
+      values: values.map(() => 0.001),
+      marker: { colors: palette, line: { color: '#080b0f', width: 2 } },
+      textfont: { family: 'IBM Plex Mono, monospace', size: 11, color: '#e8edf2' },
+      hole: 0.45,
+      pull: values.map(v => v === maxVal ? 0.06 : 0),
+      hovertemplate: '<b>%{label}</b><br>%{value}<br>%{percent}<extra></extra>',
+      textposition: 'outside',
+      automargin: true
+    };
+
+    Plotly.newPlot(div, [trace], layout, config).then(() => {
+      const steps = 25;
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step > steps) { clearInterval(interval); return; }
+        const p = step / steps;
+        const eased = 1 - Math.pow(1 - p, 2);
+        Plotly.restyle(div, { values: [values.map(v => Math.max(v * eased, 0.001))] }, [0]);
+        step++;
+      }, 24);
+    });
+
+  // ── SCATTER ──────────────────────────────────────────────
+  } else if (cfg.chart_type === 'scatter') {
+    const layout = {
+      title: { text: cfg.title || '', font: { family: 'Syne, sans-serif', size: 14, color: '#e8edf2' }, x: 0.02 },
+      paper_bgcolor: 'transparent',
+      plot_bgcolor: 'transparent',
+      font: { family: 'IBM Plex Mono, monospace', color: '#8899aa', size: 11 },
+      xaxis: { gridcolor: 'rgba(255,255,255,0.03)', linecolor: 'rgba(255,255,255,0.06)', tickfont: { color: '#4a5568', size: 10 }, zeroline: false },
+      yaxis: { gridcolor: 'rgba(255,255,255,0.03)', linecolor: 'rgba(255,255,255,0.06)', tickfont: { color: '#4a5568', size: 10 }, zeroline: false },
+      margin: { t: 50, l: 55, r: 20, b: 65 },
+      hoverlabel
+    };
+
+    const trace = {
+      type: 'scatter',
+      mode: 'markers',
+      x: [xVals[0]],
+      y: [yVals[0]],
+      marker: { color: palette[0], size: 8, opacity: 0.85, line: { color: 'rgba(79,255,176,0.3)', width: 1 } },
+      hovertemplate: '<b>(%{x}, %{y})</b><extra></extra>'
+    };
+
+    Plotly.newPlot(div, [trace], layout, config).then(() => {
+      let i = 2;
+      const interval = setInterval(() => {
+        if (i > xVals.length) { clearInterval(interval); return; }
+        Plotly.restyle(div, {
+          x: [xVals.slice(0, i)],
+          y: [yVals.slice(0, i)]
+        }, [0]);
+        i++;
+      }, 50);
+    });
+  }
+}
 </script>
 </body>
 </html>

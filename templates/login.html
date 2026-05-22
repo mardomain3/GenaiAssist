@@ -1,271 +1,675 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Login</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GenAI Assistant — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080b0f;
+      --surface: #0e1218;
+      --card: #111620;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --accent: #4fffb0;
+      --accent-dim: rgba(79,255,176,0.1);
+      --accent-glow: rgba(79,255,176,0.2);
+      --blue: #4facff;
+      --blue-dim: rgba(79,172,255,0.1);
+      --text: #ffffff;
+      --text-muted: #c5c9d0;
+      --text-mid: #aeb9c4;
+      --danger: #ff5060;
+      --danger-dim: rgba(255, 80, 95, 0.402);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f172a;
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(ellipse 70% 50% at 50% -5%, rgba(79,255,176,0.05) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* subtle grid */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
       min-height: 100vh;
     }
-    .card {
-      background: #1e293b;
-      padding: 2.5rem;
-      border-radius: 12px;
-      width: 380px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+
+    /* NAV */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,11,15,0.7);
+      backdrop-filter: blur(20px);
     }
-    h2 { color: #f1f5f9; font-size: 1.6rem; margin-bottom: 1.5rem; text-align: center; }
-    label { color: #94a3b8; font-size: 0.85rem; display: block; margin-bottom: 0.3rem; }
-    input {
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .nav-tag {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+    }
+
+    /* MAIN LAYOUT */
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: calc(100vh - 60px);
+    }
+
+    @media(max-width: 768px) {
+      .main { grid-template-columns: 1fr; }
+      .left-panel { display: none; }
+    }
+
+    /* LEFT PANEL */
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem 3rem 4rem 4rem;
+      border-right: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      bottom: -100px;
+      left: -100px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(79,255,176,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .panel-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.25em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    .panel-tag::before {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .panel-headline {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .panel-headline .accent { color: var(--accent); }
+
+    .panel-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+      max-width: 360px;
+      margin-bottom: 3rem;
+    }
+
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.9rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: border-color 0.2s;
+    }
+
+    .feature-item:hover { border-color: var(--border-hover); }
+
+    .feature-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 0.35rem;
+      flex-shrink: 0;
+      animation: breathe 2.5s ease-in-out infinite;
+    }
+
+    .feature-dot.blue { background: var(--blue); animation-delay: 0.5s; }
+    .feature-dot.purple { background: #c77dff; animation-delay: 1s; }
+    .feature-dot.yellow { background: #ffd93d; animation-delay: 1.5s; }
+
+    @keyframes breathe {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    .feature-text { font-size: 0.75rem; color: var(--text-mid); line-height: 1.6; }
+    .feature-text strong { color: var(--text); font-weight: 500; display: block; margin-bottom: 0.1rem; }
+
+    /* RIGHT PANEL — FORM */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .form-wrap {
       width: 100%;
-      padding: 0.65rem 0.9rem;
-      border-radius: 8px;
-      border: 1px solid #334155;
-      background: #0f172a;
-      color: #f1f5f9;
-      font-size: 0.95rem;
-      margin-bottom: 1.2rem;
-      outline: none;
-      transition: border 0.2s;
+      max-width: 380px;
     }
-    input:focus { border-color: #6366f1; }
+
+    .form-header {
+      margin-bottom: 2rem;
+    }
+
+    .form-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.3rem;
+    }
+
+    .form-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 1.75rem;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.55rem;
+      background: transparent;
+      border: none;
+      border-radius: 7px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.05em;
+    }
+
+    .tab-btn.active {
+      background: var(--card);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+
+    /* FORM FIELDS */
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.45rem;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .field input:focus {
+      border-color: rgba(79,255,176,0.4);
+      box-shadow: 0 0 0 3px rgba(79,255,176,0.06);
+    }
+
+    .field input::placeholder { color: var(--text-muted); }
+
+    /* MESSAGES */
+    .msg {
+      padding: 0.75rem 1rem;
+      border-radius: 9px;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .msg.error {
+      display: block;
+      background: var(--danger-dim);
+      border: 1px solid rgba(255,80,96,0.2);
+      color: var(--danger);
+    }
+
+    .msg.success {
+      display: block;
+      background: rgba(79,255,176,0.05);
+      border: 1px solid rgba(79,255,176,0.2);
+      color: var(--accent);
+    }
+
+    /* BUTTONS */
     .btn-primary {
       width: 100%;
-      padding: 0.75rem;
-      background: #6366f1;
-      color: white;
+      padding: 0.85rem;
+      background: var(--accent);
       border: none;
-      border-radius: 8px;
-      font-size: 1rem;
+      border-radius: 9px;
+      color: #050810;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
       cursor: pointer;
-      font-weight: 600;
-      transition: background 0.2s;
-      margin-bottom: 0.75rem;
-    }
-    .btn-primary:hover { background: #4f46e5; }
-    .btn-secondary {
-      width: 100%;
-      padding: 0.75rem;
-      background: transparent;
-      color: #6366f1;
-      border: 1.5px solid #6366f1;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-      font-weight: 600;
       transition: all 0.2s;
-      text-align: center;
-      display: block;
-      text-decoration: none;
+      margin-top: 0.25rem;
     }
-    .btn-secondary:hover { background: #6366f1; color: white; }
-    .error {
-      background: #7f1d1d;
-      color: #fca5a5;
-      padding: 0.6rem 0.9rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      font-size: 0.85rem;
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px var(--accent-glow);
     }
-    .success {
-      background: #14532d;
-      color: #86efac;
-      padding: 0.6rem 0.9rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      font-size: 0.85rem;
-    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    /* GOOGLE BUTTON */
     .divider {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      margin: 1rem 0;
+      margin: 1.25rem 0;
     }
-    .divider hr { flex: 1; border: none; border-top: 1px solid #334155; }
-    .divider span { color: #475569; font-size: 0.8rem; }
-    .hint { color: #64748b; font-size: 0.78rem; text-align: center; margin-top: 1rem; }
-    .hint a { color: #818cf8; text-decoration: none; }
 
-    /* Register modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal {
-      background: #1e293b;
-      padding: 2rem;
-      border-radius: 12px;
-      width: 360px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      position: relative;
-    }
-    .modal h3 { color: #f1f5f9; margin-bottom: 1.2rem; font-size: 1.3rem; }
-    .close-btn {
-      position: absolute;
-      top: 1rem; right: 1rem;
-      background: none;
+    .divider hr {
+      flex: 1;
       border: none;
-      color: #64748b;
-      font-size: 1.3rem;
-      cursor: pointer;
+      border-top: 1px solid var(--border);
     }
-    .close-btn:hover { color: #f1f5f9; }
-    #register-msg { margin-bottom: 0.8rem; font-size: 0.85rem; min-height: 1.2rem; }
+
+    .divider span {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
 
     .btn-google {
-  width: 100%;
-  padding: 0.75rem;
-  background: white;
-  color: #1e293b;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  margin-bottom: 0.75rem;
-}
-.btn-google:hover { background: #f8fafc; border-color: #cbd5e1; }
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text-mid);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      text-decoration: none;
+    }
+
+    .btn-google:hover {
+      border-color: var(--border-hover);
+      color: var(--text);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .btn-google svg { flex-shrink: 0; }
+
+    /* REGISTER MSG */
+    #register-msg {
+      font-size: 0.72rem;
+      min-height: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.64rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      border-top: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-wrap { animation: fadeUp 0.6s ease forwards; }
+    .left-panel .panel-tag { animation: fadeUp 0.6s ease 0.1s both; }
+    .left-panel .panel-headline { animation: fadeUp 0.6s ease 0.2s both; }
+    .left-panel .panel-sub { animation: fadeUp 0.6s ease 0.3s both; }
+    .left-panel .features { animation: fadeUp 0.6s ease 0.4s both; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: 100px;
+      padding: 0.65rem 1.5rem;
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
+<div class="wrap">
 
-  <!-- Login Card -->
-  <div class="card">
-    <h2>🔐 Sign In</h2>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
-    {% if error %}
-    <div class="error">{{ error }}</div>
-    {% endif %}
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">gen<span>ai</span> assistant</div>
+  <div class="nav-tag">secure access</div>
+</nav>
 
-    {% if registered %}
-    <div class="success">✅ Account created! Please log in.</div>
-    {% endif %}
+<!-- MAIN -->
+<div class="main">
 
-    <form method="post" action="/login">
-      <label>Username</label>
-      <input type="text" name="username" placeholder="Enter username" required />
-      <label>Password</label>
-      <input type="password" name="password" placeholder="Enter password" required />
-      <button type="submit" class="btn-primary">Login</button>
-    </form>
-
-    <div class="divider"><hr><span>or</span><hr></div>
-     <a href="/auth/google" class="btn-google">
-        <svg width="18" height="18" viewBox="0 0 48 48" style="margin-right:8px;">
-          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          <path fill="none" d="M0 0h48v48H0z"/>
-        </svg>
-        Continue with Google
-      </a>
-        {% if error %}
-    <div class="error">
-      {% if error == "google_failed" %}
-        ❌ Google sign-in failed. Please try again.
-      {% else %}
-        {{ error }}
-      {% endif %}
-    </div>
-    {% endif %}
-
-    <button class="btn-secondary" onclick="openRegister()">Create an Account</button>
-
-    <p class="hint">Test APIs at <a href="/docs">/docs</a></p>
-  </div>
-
-  <!-- Register Modal -->
-  <div class="modal-overlay" id="register-modal">
-    <div class="modal">
-      <button class="close-btn" onclick="closeRegister()">✕</button>
-      <h3>📝 Create Account</h3>
-      <div id="register-msg"></div>
-      <label>Username</label>
-      <input type="text" id="reg-username" placeholder="Choose a username" style="width:100%;padding:0.65rem 0.9rem;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:0.95rem;margin-bottom:1.2rem;outline:none;" />
-      <label>Password</label>
-      <input type="password" id="reg-password" placeholder="Choose a password" style="width:100%;padding:0.65rem 0.9rem;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-size:0.95rem;margin-bottom:1.2rem;outline:none;" />
-     
-      <button class="btn-primary" onclick="submitRegister()">Register</button>
-      <div class="divider"><hr><span>or</span><hr></div>
-      <!-- Add this ABOVE the existing divider and register button -->
-      <a href="/auth/google" class="btn-google">
-        <svg width="18" height="18" viewBox="0 0 48 48" style="margin-right:8px;">
-          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          <path fill="none" d="M0 0h48v48H0z"/>
-        </svg>
-        Continue with Google
-      </a>
-      {% if error %}
-    <div class="error">
-      {% if error == "google_failed" %}
-        ❌ Google sign-in failed. Please try again.
-      {% else %}
-        {{ error }}
-      {% endif %}
-    </div>
-    {% endif %}
-
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="panel-tag">neural query interface</div>
+    <h1 class="panel-headline">
+      Your data.<br/>
+      <span class="accent">Answered.</span>
+    </h1>
+    <p class="panel-sub">
+      Upload any Excel dataset and ask questions in plain English.
+      Get instant insights, visualizations, and AI-powered analysis.
+    </p>
+    <div class="features">
+      <div class="feature-item">
+        <div class="feature-dot"></div>
+        <div class="feature-text">
+          <strong>Natural Language Queries</strong>
+          Ask anything about your data — no SQL or coding needed.
         </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-dot blue"></div>
+        <div class="feature-text">
+          <strong>Auto Visualization</strong>
+          AI picks the best chart type and animates it instantly.
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-dot purple"></div>
+        <div class="feature-text">
+          <strong>Business Insights</strong>
+          Get plain-English analysis of what your data actually means.
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-dot yellow"></div>
+        <div class="feature-text">
+          <strong>Powered by Groq + LLaMA 3.3</strong>
+          Ultra-fast inference on the world's best open model.
+        </div>
+      </div>
+    </div>
   </div>
 
-  <script>
-    function openRegister() {
-      document.getElementById('register-modal').classList.add('active');
-    }
-    function closeRegister() {
-      document.getElementById('register-modal').classList.remove('active');
-      document.getElementById('register-msg').textContent = '';
-    }
-    async function submitRegister() {
-      const username = document.getElementById('reg-username').value.trim();
-      const password = document.getElementById('reg-password').value.trim();
-      const msg = document.getElementById('register-msg');
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="form-wrap">
 
-      if (!username || !password) {
-        msg.style.color = '#fca5a5';
-        msg.textContent = '⚠️ Please fill in both fields.';
-        return;
-      }
+      <div class="form-header">
+        <div class="form-title" id="form-title">Welcome back</div>
+        <div class="form-sub" id="form-sub">sign in to continue to your workspace</div>
+      </div>
 
-      const res = await fetch('/register', {
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">sign in</button>
+        <button class="tab-btn" id="tab-register" onclick="switchTab('register')">create account</button>
+      </div>
+
+      <!-- SUCCESS / ERROR MESSAGES -->
+      {% if registered %}
+      <div class="msg success">✓ account created — sign in below</div>
+      {% endif %}
+
+      {% if error %}
+      <div class="msg error">✗ {{ error }}</div>
+      {% endif %}
+
+      <div class="msg" id="register-msg"></div>
+
+      <!-- LOGIN FORM -->
+      <div id="login-form">
+        <form method="post" action="/login">
+          <div class="field">
+            <label>username</label>
+            <input type="text" name="username" placeholder="enter your username" required autocomplete="username"/>
+          </div>
+          <div class="field">
+            <label>password</label>
+            <input type="password" name="password" placeholder="enter your password" required autocomplete="current-password"/>
+          </div>
+          <button type="submit" class="btn-primary">sign in →</button>
+        </form>
+
+        <div class="divider"><hr><span>or</span><hr></div>
+
+        <a href="/auth/google" class="btn-google">
+          <svg width="16" height="16" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          continue with google
+        </a>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="register-form" style="display:none;">
+        <div class="field">
+          <label>username</label>
+          <input type="text" id="reg-username" placeholder="choose a username" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label>password</label>
+          <input type="password" id="reg-password" placeholder="choose a password" autocomplete="new-password"/>
+        </div>
+        <div class="field">
+          <label>confirm password</label>
+          <input type="password" id="reg-confirm" placeholder="confirm your password" autocomplete="new-password"/>
+        </div>
+        <button class="btn-primary" onclick="submitRegister()">create account →</button>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<footer>
+  Mardomain Inc &nbsp;·&nbsp; &copy; 2025 genai assistant
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+  // Tab switching
+  function switchTab(tab) {
+    const isLogin = tab === 'login';
+
+    document.getElementById('tab-login').classList.toggle('active', isLogin);
+    document.getElementById('tab-register').classList.toggle('active', !isLogin);
+    document.getElementById('login-form').style.display = isLogin ? 'block' : 'none';
+    document.getElementById('register-form').style.display = isLogin ? 'none' : 'block';
+    document.getElementById('form-title').textContent = isLogin ? 'Welcome back' : 'Create account';
+    document.getElementById('form-sub').textContent = isLogin
+      ? 'sign in to continue to your workspace'
+      : 'join to start querying your data';
+
+    document.getElementById('register-msg').className = 'msg';
+    document.getElementById('register-msg').textContent = '';
+  }
+
+  // Toast
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.borderColor = isError ? '#ff5060' : '#4fffb0';
+    t.style.color = isError ? '#ff5060' : '#4fffb0';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Register
+  async function submitRegister() {
+    const username = document.getElementById('reg-username').value.trim();
+    const password = document.getElementById('reg-password').value.trim();
+    const confirm  = document.getElementById('reg-confirm').value.trim();
+    const msg      = document.getElementById('register-msg');
+
+    if (!username || !password || !confirm) {
+      msg.className = 'msg error';
+      msg.textContent = '✗ please fill in all fields';
+      return;
+    }
+
+    if (password !== confirm) {
+      msg.className = 'msg error';
+      msg.textContent = '✗ passwords do not match';
+      return;
+    }
+
+    if (password.length < 6) {
+      msg.className = 'msg error';
+      msg.textContent = '✗ password must be at least 6 characters';
+      return;
+    }
+
+    try {
+      const res  = await fetch('/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
+      const data = await res.json();
 
       if (res.ok) {
-        closeRegister();
-        // Show success message on login page by reloading with param
-        window.location.href = '/login?registered=1';
+        showToast('✓ account created — sign in now');
+        setTimeout(() => switchTab('login'), 1000);
       } else {
-        const data = await res.json();
-        msg.style.color = '#fca5a5';
-        msg.textContent = '❌ ' + (data.detail || 'Registration failed');
+        msg.className = 'msg error';
+        msg.textContent = '✗ ' + (data.detail || 'registration failed');
       }
+    } catch (err) {
+      msg.className = 'msg error';
+      msg.textContent = '✗ something went wrong — try again';
     }
-  </script>
+  }
 
+  // Auto switch to register tab if URL has ?tab=register
+  if (window.location.search.includes('tab=register')) switchTab('register');
+</script>
 </body>
 </html>
