@@ -155,8 +155,8 @@ async def upload_file(
     file: UploadFile = File(...),
     current_user=Depends(get_current_user_cookie)   # ✅ cookie
 ):
-    if not file.filename.endswith(".xlsx") or not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Only .xlsx  and csv files are supported")
+    if not file.filename.endswith(".xlsx") :
+        raise HTTPException(status_code=400, detail="Only .xlsx files are supported")
 
     file_id = str(uuid.uuid4())
     save_path = f"data/{file_id}_{file.filename}"
