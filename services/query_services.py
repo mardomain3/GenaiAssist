@@ -175,7 +175,10 @@ def detect_chart(question: str, display_result, result_columns: list) -> dict:
 
 
 def run_query(file_path: str, question: str):
-    df = pd.read_excel(file_path)
+    if file_path.endswith(".xlsx"):
+         df = pd.read_excel(file_path)
+    elif file_path.endswith(".csv"):
+         df=pd.read_csv(file_path)
 
     # Step 1: Generate pandas query
     pandas_query = query_chain.invoke({
